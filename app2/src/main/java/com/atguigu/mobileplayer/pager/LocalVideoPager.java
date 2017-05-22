@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
@@ -11,7 +12,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.atguigu.mobileplayer.R;
 import com.atguigu.mobileplayer.activity.SystemVideoPlayerActivity;
@@ -21,12 +21,7 @@ import com.atguigu.mobileplayer.fragment.BaseFragment;
 
 import java.util.ArrayList;
 
-/**
- * 作者：杨光福 on 2017/5/19 11:47
- * QQ：541433511
- * 微信：yangguangfu520
- * 作用：
- */
+
 
 public class LocalVideoPager extends BaseFragment {
 //    private TextView textView;
@@ -38,10 +33,7 @@ public class LocalVideoPager extends BaseFragment {
     //重写视图
     @Override
     public View initView() {
-//        textView = new TextView(context);
-//        textView.setTextSize(30);
-//        textView.setGravity(Gravity.CENTER);
-//        textView.setTextColor(Color.RED);
+
         View view = View.inflate(context, R.layout.fragment_local_video_pager, null);
         lv = (ListView) view.findViewById(R.id.lv);
         tv_nodata = (TextView) view.findViewById(R.id.tv_nodata);
@@ -50,11 +42,17 @@ public class LocalVideoPager extends BaseFragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
              //   MediaItem mediaItem = mediaItems.get(position);
 
-                MediaItem item = adapter.getItem(position);
-                Toast.makeText(context, ""+item.toString(), Toast.LENGTH_SHORT).show();
-                //把系统的播放器调起来
-                Intent intent = new Intent(context,SystemVideoPlayerActivity.class);
-                intent.setDataAndType(Uri.parse(item.getData()),"video/*");
+//                MediaItem item = adapter.getItem(position);
+//                Toast.makeText(context, ""+item.toString(), Toast.LENGTH_SHORT).show();
+//                //把系统的播放器调起来
+//                Intent intent = new Intent(context,SystemVideoPlayerActivity.class);
+//                intent.setDataAndType(Uri.parse(item.getData()),"video/*");
+//                startActivity(intent);
+                Intent intent = new Intent(context, SystemVideoPlayerActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("videolist",mediaItems);
+                intent.putExtra("position",position);
+                intent.putExtras(bundle);
                 startActivity(intent);
 
             }
@@ -65,7 +63,6 @@ public class LocalVideoPager extends BaseFragment {
     @Override
     public void initData() {
         super.initData();
-//        textView.setText("本地视频的内容");
         getDate();
     }
     private Handler handler = new Handler(){
@@ -88,10 +85,10 @@ public class LocalVideoPager extends BaseFragment {
                 ContentResolver resolver = context.getContentResolver();
                 Uri uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
                 String[] objs = {
-                        MediaStore.Video.Media.DISPLAY_NAME,//视频在sdcard上的名称
-                        MediaStore.Video.Media.DURATION,//视频时长
-                        MediaStore.Video.Media.SIZE,//视频文件的大小
-                        MediaStore.Video.Media.DATA//视频播放地址
+                        MediaStore.Video.Media.DISPLAY_NAME,
+                        MediaStore.Video.Media.DURATION,
+                        MediaStore.Video.Media.SIZE,
+                        MediaStore.Video.Media.DATA
                 };
                 Cursor cursor = resolver.query(uri,objs,null,null,null);
                 if(cursor != null) {

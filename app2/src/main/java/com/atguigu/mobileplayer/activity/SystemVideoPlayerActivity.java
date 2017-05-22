@@ -20,9 +20,11 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.atguigu.mobileplayer.R;
+import com.atguigu.mobileplayer.domain.MediaItem;
 import com.atguigu.mobileplayer.utils.Utils;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 public class SystemVideoPlayerActivity extends AppCompatActivity implements View.OnClickListener{
@@ -30,6 +32,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
     private static final int PROGRESS = 0;
     private VideoView vv;
     private Uri uri;
+    private ArrayList<MediaItem> mediaItems;
 
     private LinearLayout llTop;
     private TextView tvName;
@@ -49,6 +52,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
     private Button btnSwitchScreen;
     private Utils utils;
     private MyBroadCastReceiver receiver;
+    private int position;
 
     /**
      * Find the Views in the layout<br />
@@ -144,16 +148,28 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         utils = new Utils();
         initData();
-
         findViews();
-
-
+        getData();
         uri = getIntent().getData();
         setListener();
+        setData();
         vv.setVideoURI(uri);
+    }
+    private void setData(){
+        if(mediaItems != null && mediaItems.size() > 0) {
+            MediaItem mediaItem = mediaItems.get(position);
+            tvName.setText(mediaItem.getName());
+            vv.setVideoPath(mediaItem.getData());
+        }else if(uri != null) {
+            vv.setVideoURI(uri);
+        }
+    }
+    private void getData(){
+        uri = getIntent().getData();
+        mediaItems = (ArrayList<MediaItem>) getIntent().getSerializableExtra("videolist");
+        position = getIntent().getIntExtra("position",0);
     }
 
     private void initData() {
