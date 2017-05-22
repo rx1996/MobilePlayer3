@@ -103,8 +103,10 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
             // Handle clicks for btnSwitchPlayer
         } else if ( v == btnExit ) {
             // Handle clicks for btnExit
+            finish();
         } else if ( v == btnPre ) {
             // Handle clicks for btnPre
+            setPreVideo();
         } else if ( v == btnStartPause ) {
             if(vv.isPlaying()){
                 //暂停
@@ -119,6 +121,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
             }
             // Handle clicks for btnStartPause
         } else if ( v == btnNext ) {
+            setNextVideo();
             // Handle clicks for btnNext
         } else if ( v == btnSwitchScreen ) {
             // Handle clicks for btnSwitchScreen
@@ -165,6 +168,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
         }else if(uri != null) {
             vv.setVideoURI(uri);
         }
+        setButtonStatus();
     }
     private void getData(){
         uri = getIntent().getData();
@@ -226,7 +230,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
         vv.setOnErrorListener(new MediaPlayer.OnErrorListener() {
             @Override
             public boolean onError(MediaPlayer mp, int what, int extra) {
-                Toast.makeText(SystemVideoPlayerActivity.this, "播放出错了哦", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SystemVideoPlayerActivity.this, "播放出错了", Toast.LENGTH_SHORT).show();
                 return false;
             }
         });
@@ -234,8 +238,9 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
         vv.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                Toast.makeText(SystemVideoPlayerActivity.this, "视频播放完成", Toast.LENGTH_SHORT).show();
-                finish();
+//                Toast.makeText(SystemVideoPlayerActivity.this, "视频播放完成", Toast.LENGTH_SHORT).show();
+//                finish();
+                setNextVideo();
             }
         });
 
@@ -259,6 +264,53 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
 
             }
         });
+    }
+    private void setPreVideo() {
+        position--;
+        if(position > 0){
+            MediaItem mediaItem = mediaItems.get(position);
+            vv.setVideoPath(mediaItem.getData());
+            tvName.setText(mediaItem.getName());
+            setButtonStatus();
+        }
+    }
+    private void setNextVideo() {
+        position++;
+        if(position < mediaItems.size()){
+            MediaItem mediaItem = mediaItems.get(position);
+            vv.setVideoPath(mediaItem.getData());
+            tvName.setText(mediaItem.getName());
+            setButtonStatus();
+        }else{
+            Toast.makeText(this,"退出播放器",Toast.LENGTH_SHORT).show();
+            finish();
+        }
+    }
+    private void setButtonStatus() {
+        if(mediaItems != null && mediaItems.size() >0){
+            setEnable(true);
+            if(position ==0){
+                btnPre.setBackgroundResource(R.drawable.btn_pre_gray);
+                btnPre.setEnabled(false);
+            }
+            if(position ==mediaItems.size()-1){
+                btnNext.setBackgroundResource(R.drawable.btn_next_gray);
+                btnNext.setEnabled(false);
+            }
+        }else if(uri != null){
+            setEnable(false);
+        }
+    }
+    private void setEnable(boolean b) {
+        if( b){
+            btnPre.setBackgroundResource(R.drawable.btn_pre_selector);
+            btnNext.setBackgroundResource(R.drawable.btn_next_selector);
+        }else {
+            btnPre.setBackgroundResource(R.drawable.btn_pre_gray);
+            btnNext.setBackgroundResource(R.drawable.btn_next_gray);
+        }
+        btnPre.setEnabled(b);
+        btnNext.setEnabled(b);
     }
 
     @Override
