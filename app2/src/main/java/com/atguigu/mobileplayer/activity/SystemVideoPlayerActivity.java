@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -19,11 +20,11 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import com.atguigu.mobileplayer.R;
 import com.atguigu.mobileplayer.domain.MediaItem;
 import com.atguigu.mobileplayer.utils.Utils;
+import com.atguigu.mobileplayer.view.VideoView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -33,6 +34,8 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
 
     private static final int PROGRESS = 0;
     private static final int HIDE_MEDIACONTROLLER = 1;
+    private static final int DEFUALT_SCREEN = 0;
+    private static final int FULL_SCREEN = 1;
     private VideoView vv;
     private Uri uri;
     private ArrayList<MediaItem> mediaItems;
@@ -57,6 +60,11 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
     private MyBroadCastReceiver receiver;
     private int position;
     private GestureDetector detector;
+    private boolean isFullScreen = false;
+    private int screenHeight;
+    private int screenWidth;
+    private int videoWidth;
+    private int videoHeight;
 
     /**
      * Find the Views in the layout<br />
@@ -119,9 +127,38 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
             // Handle clicks for btnNext
         } else if ( v == btnSwitchScreen ) {
             // Handle clicks for btnSwitchScreen
+            if (isFullScreen) {
+                setVideoType(DEFUALT_SCREEN);
+            } else {
+                setVideoType(FULL_SCREEN);
+            }
         }
         handler.removeMessages(HIDE_MEDIACONTROLLER);
         handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER,4000);
+    }
+    private void setVideoType(int videoType) {
+        switch (videoType) {
+            case FULL_SCREEN:
+                isFullScreen = true;
+                btnSwitchScreen.setBackgroundResource(R.drawable.btn_switch_screen_default_selector);
+                vv.setVideoSize(screenWidth, screenHeight);
+                break;
+            case DEFUALT_SCREEN:
+                isFullScreen = false;
+                btnSwitchScreen.setBackgroundResource(R.drawable.btn_switch_screen_full_selector);
+                int mVideoWidth = videoWidth;
+                int mVideoHeight = videoHeight;
+                int width = screenWidth;
+                int height = screenHeight;
+
+                if (mVideoWidth * height < width * mVideoHeight) {
+                    width = height * mVideoWidth / mVideoHeight;
+                } else if (mVideoWidth * height > width * mVideoHeight) {
+                    height = width * mVideoHeight / mVideoWidth;
+                }
+                vv.setVideoSize(width, height);
+                break;
+        }
     }
     private void setStartOrPause() {
         if (vv.isPlaying()) {
@@ -205,7 +242,12 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
 
         @Override
         public boolean onDoubleTap(MotionEvent e) {
-            Toast.makeText(SystemVideoPlayerActivity.this, "双击了", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(SystemVideoPlayerActivity.this, "双击了", Toast.LENGTH_SHORT).show();
+            if (isFullScreen) {
+                setVideoType(DEFUALT_SCREEN);
+            } else {
+                setVideoType(FULL_SCREEN);
+            }
             return super.onDoubleTap(e);
         }
 
@@ -221,7 +263,12 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
             return super.onSingleTapConfirmed(e);
         }
     });
-}
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        screenHeight = metrics.heightPixels;
+        screenWidth = metrics.widthPixels;
+
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -282,12 +329,15 @@ class MyBroadCastReceiver extends BroadcastReceiver {
         vv.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
+                videoWidth = mp.getVideoWidth();
+                videoHeight = mp.getVideoHeight();
                 int duration = vv.getDuration();
                 seekbarVideo.setMax(duration);
                 tvDuration.setText(utils.stringForTime(duration));
                 vv.start();
                 handler.sendEmptyMessage(PROGRESS);
                 hideMediaController();
+                setVideoType(DEFUALT_SCREEN);
             }
         });
 
