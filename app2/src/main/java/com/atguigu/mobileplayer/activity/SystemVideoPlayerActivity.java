@@ -2,6 +2,8 @@ package com.atguigu.mobileplayer.activity;
 
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -14,9 +16,11 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.atguigu.mobileplayer.R;
+import com.atguigu.mobileplayer.utils.Utils;
 
 public class SystemVideoPlayerActivity extends AppCompatActivity implements View.OnClickListener{
 
+    private static final int PROGRESS = 0;
     private VideoView vv;
     private Uri uri;
 
@@ -36,6 +40,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
     private Button btnStartPause;
     private Button btnNext;
     private Button btnSwitchScreen;
+    private Utils utils;
 
     /**
      * Find the Views in the layout<br />
@@ -107,11 +112,27 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
             // Handle clicks for btnSwitchScreen
         }
     }
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case PROGRESS :
+                    int currentPosition = vv.getCurrentPosition();
+                    seekbarVideo.setProgress(currentPosition);
+                    tvCurrentTime.setText(utils.stringForTime(currentPosition));
+                    sendEmptyMessageDelayed(PROGRESS,1000);
+                    break;
+            }
+        }
+    };
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        utils = new Utils();
 
         findViews();
 
@@ -127,7 +148,9 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
             public void onPrepared(MediaPlayer mp) {
                 int duration = vv.getDuration();
                 seekbarVideo.setMax(duration);
+                tvDuration.setText(utils.stringForTime(duration));
                 vv.start();
+                handler.sendEmptyMessage(PROGRESS);
             }
         });
 
@@ -167,5 +190,11 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
 
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacksAndMessages(null);
     }
 }
