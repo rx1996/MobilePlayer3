@@ -1,5 +1,9 @@
 package com.atguigu.mobileplayer.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
@@ -17,6 +21,9 @@ import android.widget.VideoView;
 
 import com.atguigu.mobileplayer.R;
 import com.atguigu.mobileplayer.utils.Utils;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class SystemVideoPlayerActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -41,6 +48,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
     private Button btnNext;
     private Button btnSwitchScreen;
     private Utils utils;
+    private MyBroadCastReceiver receiver;
 
     /**
      * Find the Views in the layout<br />
@@ -121,18 +129,24 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
                     int currentPosition = vv.getCurrentPosition();
                     seekbarVideo.setProgress(currentPosition);
                     tvCurrentTime.setText(utils.stringForTime(currentPosition));
+                    tvSystemTime.setText(getSystemTime());
                     sendEmptyMessageDelayed(PROGRESS,1000);
                     break;
             }
         }
     };
 
+    private String getSystemTime() {
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+        return format.format(new Date());
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         utils = new Utils();
+        initData();
 
         findViews();
 
@@ -140,6 +154,45 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
         uri = getIntent().getData();
         setListener();
         vv.setVideoURI(uri);
+    }
+
+    private void initData() {
+        utils = new Utils();
+
+        //注册监听电量变化广播
+        receiver = new MyBroadCastReceiver();
+        IntentFilter intentFilter  = new IntentFilter();
+        //监听电量变化
+        intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
+        registerReceiver(receiver,intentFilter);
+    }
+    class MyBroadCastReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int level = intent.getIntExtra("level", 0);//主线程
+            setBatteryView(level);
+
+        }
+    }
+    private void setBatteryView(int level) {
+        if(level <=0){
+            ivBattery.setImageResource(R.drawable.ic_battery_0);
+        }else if(level <= 10){
+            ivBattery.setImageResource(R.drawable.ic_battery_10);
+        }else if(level <=20){
+            ivBattery.setImageResource(R.drawable.ic_battery_20);
+        }else if(level <=40){
+            ivBattery.setImageResource(R.drawable.ic_battery_40);
+        }else if(level <=60){
+            ivBattery.setImageResource(R.drawable.ic_battery_60);
+        }else if(level <=80){
+            ivBattery.setImageResource(R.drawable.ic_battery_80);
+        }else if(level <=100){
+            ivBattery.setImageResource(R.drawable.ic_battery_100);
+        }else {
+            ivBattery.setImageResource(R.drawable.ic_battery_100);
+        }
     }
 
     private void setListener() {
@@ -194,7 +247,17 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
 
     @Override
     protected void onDestroy() {
+        if(handler != null){
+            //把所有消息移除
+            handler.removeCallbacksAndMessages(null);
+            handler = null;
+        }
+
+        //取消注册
+        if(receiver != null){
+            unregisterReceiver(receiver);
+            receiver = null;
+        }
         super.onDestroy();
-        handler.removeCallbacksAndMessages(null);
     }
 }
