@@ -103,6 +103,7 @@ public class LocalVideoPager extends BaseFragment {
                     }
                     cursor.close();
                 }
+                handler.sendEmptyMessage(0);
             }
         }.start();
     }
