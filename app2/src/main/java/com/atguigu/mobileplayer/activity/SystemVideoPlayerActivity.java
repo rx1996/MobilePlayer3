@@ -294,13 +294,38 @@ public class SystemVideoPlayerActivity extends AppCompatActivity implements View
         currentVoice = am.getStreamVolume(AudioManager.STREAM_MUSIC);
         maxVoice = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
     }
+    private float dowY;
+    private int mVol;
+    private float touchRang;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         //把事件交给手势识别器解析
         detector.onTouchEvent(event);
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN :
+                dowY = event.getY();
+                mVol = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+                touchRang = Math.min(screenHeight,screenWidth);
+                handler.removeMessages(HIDE_MEDIACONTROLLER);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                float endY = event.getY();
+                float distanceY = dowY - endY;
+                float delta = (distanceY/touchRang)*maxVoice;
+                
+                if(delta != 0) {
+                    int mVoice = (int) Math.min(Math.max(mVol + delta , 0) , maxVoice);
+                    updateVoiceProgress(mVoice);
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER,4000);
+                break;
+        }
         return super.onTouchEvent(event);
     }
+
 
     /**
      * 是否显示控制面板
